@@ -1,7 +1,9 @@
 import numpy as np
 from utils import count
 
+
 def _dichotomy_search(fn, a, b, eps=1e-6):
+    intervals = [np.abs(b - a)]
     it = 0
     while np.abs(b - a) > eps:
         it += 1
@@ -15,10 +17,15 @@ def _dichotomy_search(fn, a, b, eps=1e-6):
             a = x1
             b = x2
             break
-    return it, (a + b) / 2
+        intervals.append(np.abs(b - a))
+
+    return {'iterations': it,
+            'min': (a + b) / 2,
+            'intervals': np.array(intervals)}
 
 
 def _gss(fn, a, b, eps=1e-6):
+    intervals = [np.abs(b - a)]
     it = 0
     inv = (3 - np.sqrt(5)) / 2
     x1 = a + (b - a) * inv
@@ -40,11 +47,16 @@ def _gss(fn, a, b, eps=1e-6):
             x2 = b - (b - a) * inv
             f2 = fn(x2)
         else:
+            intervals.append(np.abs(b - a))
             break
-    return it, (b + a) / 2
+        intervals.append(np.abs(b - a))
+    return {'iterations': it,
+            'min': (a + b) / 2,
+            'intervals': np.array(intervals)}
 
 
 def _fibonacci(fn, a, b, eps=1e-6):
+    intervals = [np.abs(b - a)]
 
     def genfib(l, r, eps):
         a, b = 0., 1.
@@ -60,7 +72,7 @@ def _fibonacci(fn, a, b, eps=1e-6):
     x2 = a + fibs[-2] / fibs[-1] * (b - a)
     f1 = fn(x1)
     f2 = fn(x2)
-    for i in range(1, n+1):
+    for i in range(1, n):
         it += 1
         if f1 < f2:
             b = x2
@@ -75,10 +87,13 @@ def _fibonacci(fn, a, b, eps=1e-6):
             x2 = a + fibs[-2-i] / fibs[-1-i] * (b - a)
             f2 = fn(x2)
         else:
+            intervals.append(np.abs(x2 - x1))
             break
-        if np.abs(b - a) < eps:
-            break
-    return it, (b + a) / 2
+        intervals.append(np.abs(b - a))
+
+    return {'iterations': n,
+            'min': (a + b) / 2,
+            'intervals': np.array(intervals)}
 
 
 
@@ -96,7 +111,9 @@ class UnidimSearch:
         elif self.method == 'fibonacci':
             algo = _fibonacci
         fn = count(fn)
-        return algo(fn, a, b, eps), fn.count
+        res = algo(fn, a, b, eps)
+        res.update({'call_count': fn.count})
+        return res
 
     def __repr__(self):
         return f'{self.__class__.__name__}(method={self.method})'
