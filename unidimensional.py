@@ -102,7 +102,7 @@ class UnidimSearch:
         assert method in ['dichotomy', 'golden', 'fibonacci']
         self.method = method
 
-    def __call__(self, fn, a, b, eps):
+    def __call__(self, fn, a, b, eps=1e-6):
 
         if self.method == 'dichotomy':
             algo = _dichotomy_search
