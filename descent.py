@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve, eigvals
 from unidimensional import UnidimSearch
 
 def line_search(fn, x0, step=0.01, multiplier=1.5):
@@ -44,5 +45,24 @@ def optimize_step(fn, grad, x0, method='line', **kwargs):
     else:
         return UnidimSearch(method)(objective, 0, 1, **kwargs)['min']
 
+
+def newton(fn_grad, fn_hess, x0, eps=1e-6, verbose=False):
+    curr_x = x0
+    i = 0
+    while True:
+        i += 1
+        curr_grad = fn_grad(curr_x)
+        curr_hess = fn_hess(curr_x)
+        # if Hessian is positive definite use Cholesky decomposition
+        if np.all(eigvals(curr_hess) > 0):
+            d = cho_solve(cho_factor(curr_hess), curr_grad)
+        else:
+            d = np.linalg.inv(curr_hess).dot(curr_grad)
+        if verbose and i % verbose == 0:
+            print(
+                f'Iteration {i}, Step norm = {np.linalg.norm(d):.6f}')
+        if np.linalg.norm(d) < eps:
+            return curr_x
+        curr_x = curr_x - d
 
 
