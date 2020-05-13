@@ -18,17 +18,22 @@ def gradient_descent(fn, fn_grad, x0, alpha=1e-3, eps=1e-6, compute_alpha=False,
                      verbose=False, method='line', **kwargs):
     curr_x = x0
     curr_grad = fn_grad(x0)
-    start_norm = np.linalg.norm(curr_grad)
-    i = 1
-    while np.linalg.norm(curr_grad) > eps * start_norm:
-        if verbose:
+    prev_norm = np.linalg.norm(curr_grad)
+    i = 0
+    while True:
+        i += 1
+        if verbose and i % verbose == 0:
             print(
-                f'Iteration {i}, Norm difference = {np.linalg.norm(curr_grad) - eps * start_norm:.6f}')
+                f'Iteration {i}, Norm difference = {np.linalg.norm(curr_grad):.6f}')
         if compute_alpha:
             alpha = optimize_step(fn, curr_grad, curr_x, method=method, **kwargs)
-        curr_x -= alpha * curr_grad
+        curr_x = curr_x - alpha * curr_grad
         curr_grad = fn_grad(curr_x)
-        i += 1
+        curr_norm = np.linalg.norm(curr_grad)
+        if np.abs(prev_norm - curr_norm) < eps:
+            break
+        else:
+            prev_norm = curr_norm
     return curr_x
 
 
@@ -38,5 +43,6 @@ def optimize_step(fn, grad, x0, method='line', **kwargs):
         return line_search(objective, np.random.rand(), **kwargs)
     else:
         return UnidimSearch(method)(objective, 0, 1, **kwargs)['min']
+
 
 
